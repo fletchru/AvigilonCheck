@@ -124,9 +124,11 @@ namespace AvigilonCheck
                     else
                     {
                         waitEnd = DateTime.Now + new TimeSpan(0, 0, 10);
+
+                        List<IDevice> devices = new List<IDevice>();
                         while (DateTime.Now < waitEnd)
                         {
-                            List<IDevice> devices = nvr.Devices;
+                            devices = nvr.Devices;
                             
                             if (devices.Count == m_cameraCount)
                             {
@@ -142,7 +144,11 @@ namespace AvigilonCheck
 
                                     foreach (IDevice device in devices)
                                     {
-                                        root.Add(new XElement("id" + device.Entities.FirstOrDefault().LogicalId, device.Connected.ToString()));
+                                        IEntity iEntity = device.Entities.FirstOrDefault();
+                                        if (iEntity != null)
+                                        {
+                                            root.Add(new XElement("id" + iEntity.LogicalId, device.Connected.ToString()));
+                                        }
                                     }
                                     XmlWriterSettings xws = new XmlWriterSettings { OmitXmlDeclaration = true };
                                     using (XmlWriter xw = XmlWriter.Create(filePath, xws))
