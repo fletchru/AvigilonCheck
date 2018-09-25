@@ -99,61 +99,63 @@ namespace AvigilonCheck
                 {
                     Console.WriteLine("An error occurred while adding the NVR." + m_endPoint.Address);
                 }
-
-                // Start m_controlCenter.GetNvr
-                Activity activity = new Activity();
-                activity.Setup().Wait();
-
-                if (nvr == null)
-                {
-                    Console.WriteLine("An error occurred while connecting to the NVR.");
-                }
                 else
                 {
-                    LoginResult loginResult = nvr.Login(m_userName, m_password);
-                    if (loginResult != 0)
+                    // Start m_controlCenter.GetNvr
+                    Activity activity = new Activity();
+                    activity.Setup().Wait();
+
+                    if (nvr == null)
                     {
-                        Console.WriteLine("Failed to login to NVR: " + loginResult);
+                        Console.WriteLine("An error occurred while connecting to the NVR.");
                     }
                     else
                     {
-                        DateTime waitEnd = DateTime.Now + new TimeSpan(0, 0, 10);
-
-                        List<IDevice> devices = new List<IDevice>();
-                        while (DateTime.Now < waitEnd)
+                        LoginResult loginResult = nvr.Login(m_userName, m_password);
+                        if (loginResult != 0)
                         {
-                            devices = nvr.Devices;
-                            
-                            if (devices.Count == m_cameraCount)
+                            Console.WriteLine("Failed to login to NVR: " + loginResult);
+                        }
+                        else
+                        {
+                            DateTime waitEnd = DateTime.Now + new TimeSpan(0, 0, 10);
+
+                            List<IDevice> devices = new List<IDevice>();
+                            while (DateTime.Now < waitEnd)
                             {
-                                string fileName = m_address.ToString().Replace(".", "") + ".xml";
-                                string filePath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName) + "/" + fileName;
+                                devices = nvr.Devices;
 
-                                if (!File.Exists(filePath))
+                                if (devices.Count == m_cameraCount)
                                 {
-                                    XDocument doc = new XDocument();
-                                    
-                                    XElement root = new XElement("root");
-                                    doc.Add(root);
+                                    string fileName = m_address.ToString().Replace(".", "") + ".xml";
+                                    string filePath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName) + "/" + fileName;
 
-                                    foreach (IDevice device in devices)
+                                    if (!File.Exists(filePath))
                                     {
-                                        IEntity iEntity = device.Entities.FirstOrDefault();
-                                        if (iEntity != null)
+                                        XDocument doc = new XDocument();
+
+                                        XElement root = new XElement("root");
+                                        doc.Add(root);
+
+                                        foreach (IDevice device in devices)
                                         {
-                                            root.Add(new XElement("id" + iEntity.LogicalId, device.Connected.ToString()));
+                                            IEntity iEntity = device.Entities.FirstOrDefault();
+                                            if (iEntity != null)
+                                            {
+                                                root.Add(new XElement("id" + iEntity.LogicalId, device.Connected.ToString()));
+                                            }
+                                        }
+                                        XmlWriterSettings xws = new XmlWriterSettings { OmitXmlDeclaration = true };
+                                        using (XmlWriter xw = XmlWriter.Create(filePath, xws))
+                                        {
+                                            doc.Save(xw);
                                         }
                                     }
-                                    XmlWriterSettings xws = new XmlWriterSettings { OmitXmlDeclaration = true };
-                                    using (XmlWriter xw = XmlWriter.Create(filePath, xws))
-                                    {
-                                        doc.Save(xw);
-                                    }
+                                    break;
                                 }
-                                break;
-                            }
 
-                            Thread.Sleep(500);
+                                Thread.Sleep(500);
+                            }
                         }
                     }
                 }
