@@ -100,7 +100,7 @@ namespace AvigilonCheck
                     Console.WriteLine("An error occurred while adding the NVR." + m_endPoint.Address);
                 }
 
-                // 
+                // Start m_controlCenter.GetNvr
                 Activity activity = new Activity();
                 activity.Setup().Wait();
 
